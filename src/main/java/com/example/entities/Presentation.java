@@ -3,6 +3,8 @@ package com.example.entities;
 import java.io.Serializable;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -50,6 +52,8 @@ public class Presentation implements Serializable {
 	private String description;
 
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "presentation")
+	//Para que el Json ignore la lista de productos, evitando recursividad(Stack Overflow)
+	@JsonIgnore
 	private List<Product> products;
 
 }
