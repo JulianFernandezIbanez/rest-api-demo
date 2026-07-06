@@ -44,7 +44,7 @@ public class Product implements Serializable {
 
 	@NotNull(message = "El producto tiene que tener un nombre")
 	@NotEmpty(message = "El nombre del producto no puede estar vacio")
-	@Size(min = 4, max = 25, message = "No cumple con los requisitos (minimo 4 y maximo 25 caracteres)")
+	@Size(min = 4, max = 25, message = "El nombre no cumple con los requisitos (minimo 4 y maximo 25 caracteres)")
 	private String name;
 
 	@NotNull(message = "El producto tiene que tener una descripcion")
