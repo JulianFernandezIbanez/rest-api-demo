@@ -33,6 +33,21 @@ public class FileUploadUtil {
 		.get();
 		FileCode = generator.generate(8);
 
+		/**
+		 * Generacion del codigo alfanumerico de 8 caracteres sin usar Apache commons text
+		 * 
+		 * String caracteres = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			SecureRandom random = new SecureRandom();
+			StringBuilder sb = new StringBuilder(8);
+
+			for (int i = 0; i < 8; i++) {
+				sb.append(caracteres.charAt(random.nextInt(caracteres.length())));
+			}
+
+			String fileCode = sb.toString();
+		 * 
+		 */
+
 		try (InputStream fileInputStream = multipartFile.getInputStream()) {
 
 			Path destination = uploadPath.resolve(FileCode + "-" + fileName);
