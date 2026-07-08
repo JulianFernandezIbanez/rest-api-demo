@@ -18,6 +18,7 @@ import com.example.models.FileUploadResponse;
 import com.example.services.ProductService;
 import com.example.utilities.FileDownloadUtil;
 import com.example.utilities.FileUploadUtil;
+import com.example.utilities.FileUtils;
 
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -38,6 +39,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 
 /**
 * La anotacion @RestController es para que todos los metodos que van a ser
@@ -68,6 +70,7 @@ public class ProductController {
 	private final ProductService productService;
 	private final FileUploadUtil fileUploadUtil;
 	private final FileDownloadUtil fileDownloadUtil;
+	private final FileUtils fileUtils;
 
 	//Metodo que recibe una peticion para devolver un listado de todos los productos
 	/*@GetMapping
@@ -208,7 +211,7 @@ public class ProductController {
 
 		//Comprobar si hay errores en el producto recibido
 		if (result.hasErrors()) {
-			
+			 
 			//Recuperar los errores del producto recibido para informar de ellos
 			List<ObjectError> errors = result.getAllErrors(); 
 
@@ -323,5 +326,100 @@ public class ProductController {
 			.body(resource);
 
 	}
+
+	//Metodo que actualiza un producto cuyo id se recibe en la peticion
+	//conjuntamente con el JSON del producto y la imagen del producto
+	//que no es requerida. El metodo es practicamente igual al que persiste
+	//un producto con la imagen recibida
+	@PutMapping(value = "/{id}",consumes = "multipart/form-data")
+	@Transactional
+	public ResponseEntity<Map<String, Object>> updateProduct(
+		@Valid
+		@RequestPart Product product,
+		BindingResult result,
+		@RequestPart(name = "image", required = false) MultipartFile productImage,
+		@PathVariable(name = "id", required = true) int Product_id
+	) throws IOException{
+
+		Map<String, Object> responsAsMap = new HashMap<>();
+		ResponseEntity<Map<String,Object>> responseEntity = null;
+		List<String> errorMessage = new ArrayList<>();
+
+		//Comprobar si hay errores en el producto recibido
+		if (result.hasErrors()) {
+			
+			//Recuperar los errores del producto recibido para informar de ellos
+			List<ObjectError> errors = result.getAllErrors(); 
+
+			errors.stream().forEach(error -> {
+				errorMessage.add(error.getDefaultMessage());
+			});
+
+			responsAsMap.put("Error en la inserccion. Causa: ", errorMessage);
+			responsAsMap.put("Producto mal formado ", product);
+			responseEntity = new ResponseEntity<Map<String,Object>>(responsAsMap, HttpStatus.BAD_REQUEST);
+
+			return responseEntity;
+
+		}
+
+		//Actualizamos el producto para persistirlo, puesto que no tiene errores
+		//Antes comprobar si se recibe una imagen del producto para actualizarla
+		//en cuyo caso debemos eliminar la imagen asociada con el producto guardado,
+		//borrandola en el sistema de archivos
+
+		Product oldProduct = productService.findById(Product_id);
+
+		if (oldProduct == null) {
+
+			String failMessage = "Producto con id "+ Product_id +" no encontrado";
+			responsAsMap.put("failMessage: ", failMessage);
+			return new ResponseEntity<Map<String,Object>>(responsAsMap, HttpStatus.NOT_FOUND);
+
+		}
+
+		if (productImage != null && !productImage.isEmpty()) {
+
+			if (oldProduct.getProductImage() != null) {
+				
+				// Eliminar la imagen asociada al producto guardado
+				// para lo cual vamos a necesitar de un metodo, en un componente,
+				// que reciba el nombre del fichero de imagen y lo busque
+				// en la carpeta a donde hemos subido las imagenes, y lo elimine
+				fileUtils.deleteFile(oldProduct.getProductImage());
+
+			}
+
+			String fileCode = fileUploadUtil.saveFile(productImage.getOriginalFilename(), productImage);
+			product.setProductImage(fileCode + "-" + productImage.getOriginalFilename());
+
+			FileUploadResponse fileUploadResponse = new FileUploadResponse(
+				fileCode+ "-" +productImage.getOriginalFilename(), 
+				"products/fileDownload", 
+				productImage.getSize()
+			); 
+
+			responsAsMap.put("Informacion de la imagen del producto", fileUploadResponse);
+
+		}
+
+		try {
+
+			product.setId(Product_id);
+			Product savedProduct = productService.save(product);
+			responsAsMap.put("Mensaje :", "Producto actualizado correctamente");
+			responsAsMap.put("Producto guardado: ", savedProduct);
+			responseEntity = new ResponseEntity<Map<String,Object>>(responsAsMap, HttpStatus.OK);
+
+		} catch (DataAccessException e) {
+			String ServerErrorMessage = "Error grave en la actualizacion. Causa: "+e.getMostSpecificCause().getMessage();
+			responsAsMap.put("errorMessage: ", ServerErrorMessage);
+			responseEntity = new ResponseEntity<Map<String,Object>>(responsAsMap, HttpStatus.INTERNAL_SERVER_ERROR);	
+		}
+
+		return responseEntity;
+
+	}
+
 
 }
