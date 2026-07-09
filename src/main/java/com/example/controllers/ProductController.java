@@ -36,6 +36,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -421,5 +422,46 @@ public class ProductController {
 
 	}
 
+	/**
+	* Metodo para eliminar un producto dado el id
+	*/
+	@DeleteMapping("/{id}")
+	@Transactional
+	public ResponseEntity<Map<String, Object>> deleteProducto(@PathVariable Integer id) {
+
+		ResponseEntity<Map<String, Object>> responseEntity = null;
+		Map<String, Object> responsAsMap = new HashMap<>();
+		Product product = productService.findById(id);
+
+		if (product == null) {
+
+			String failMessage = "Producto con id "+ id +" no encontrado";
+			responsAsMap.put("failMessage: ", failMessage);
+			return new ResponseEntity<Map<String,Object>>(responsAsMap, HttpStatus.NOT_FOUND);
+
+		}
+
+		try {
+
+			if (product.getProductImage() != null) {
+				
+				fileUtils.deleteFile(product.getProductImage());
+
+			}
+
+			productService.delete(product);
+			String successMessage = "El producto con id " + id + ", ha sido eliminado";
+			responsAsMap.put("mensaje", successMessage);
+			responseEntity = new ResponseEntity<Map<String, Object>>(responsAsMap, HttpStatus.OK);
+		} catch (DataAccessException e) {
+			String errorMessage = "No ha podido ser eliminado el producto cuyo id es: " + id
+			+ ", siendo la causa mas probable: " + e.getMostSpecificCause().getMessage();
+			responsAsMap.put("mensaje", errorMessage);
+			responseEntity = new ResponseEntity<Map<String, Object>>(responsAsMap,
+			HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+	return responseEntity;
+	}
 
 }
