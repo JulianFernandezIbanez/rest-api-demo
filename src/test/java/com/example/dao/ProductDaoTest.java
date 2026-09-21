@@ -68,19 +68,4 @@ public class ProductDaoTest {
         assertThat(savedTestProduct.getId()).isGreaterThan(0);
 
     }
-
-    @Test
-    void testFindAll() {
-
-    }
-
-    @Test
-    void testFindAll2() {
-
-    }
-
-    @Test
-    void testFindById() {
-
-    }
 }
