@@ -2,6 +2,7 @@ package com.example.services;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.*;
 
 import com.example.dao.PresentationDao;
@@ -79,7 +81,17 @@ public class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("Test para recuperar los 2 productos creados")
     void testFindAll() {
+
+        // given
+        given(productDao.findAll()).willReturn(productsList);
+
+        // when
+        List<Product> testResult = productServiceImpl.findAll();
+
+        //then
+        assertEquals(2, testResult.size());
 
     }
 
@@ -110,6 +122,21 @@ public class ProductServiceImplTest {
 
         //then
         assertThat(savedProduct).isNotNull();
+
+    }
+
+    @Test
+    @DisplayName("Test que devuelve una lista de productos vacia")
+    void testEmptyProductList(){
+
+        //given
+        given(productDao.findAll()).willReturn(Collections.emptyList());
+
+        //when
+        List<Product> testList = productServiceImpl.findAll();
+
+        //then
+        assertThat(testList).isEmpty();
 
     }
 }
