@@ -150,4 +150,39 @@ public class ProductControllerTest {
 
     }
 
+    @Test
+    @DisplayName("Cotroller test que recupera un producto por su id")
+    void testFindById() throws Exception{
+
+        //given
+            int ProductId = 1;
+
+            given(productService.findById(ProductId)).willReturn(product0);
+
+        //when
+
+            //Esta forma evita crear una variable response para realizar las acciones como andDo
+            mockMvc.perform(get("/products/{id}", ProductId))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$['Producto encontrado: '].name", is(product0.getName())));
+
+    }
+
+    @Test
+    @DisplayName("Cotroller test para comprobar si no ha encontrado el producto")
+    void testProductNotFound() throws Exception{
+
+        //given
+            int ProductId = 1;
+
+            given(productService.findById(ProductId)).willReturn(null);
+
+        //when
+
+            mockMvc.perform(get("/products/{id}", ProductId))
+                    .andExpect(status().isNotFound());
+
+    }
+
 }
