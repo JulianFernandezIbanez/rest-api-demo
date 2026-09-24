@@ -1,6 +1,7 @@
 package com.example.controllers;
 
-import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.doNothing;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -182,6 +183,56 @@ public class ProductControllerTest {
 
             mockMvc.perform(get("/products/{id}", ProductId))
                     .andExpect(status().isNotFound());
+
+    }
+
+    @Test 
+    @DisplayName("Controller Test que actualiza un producto")
+    void testUpdateProduct() throws Exception{
+
+        //given
+        int id = 1;
+        given(productService.findById(id)).willReturn(product0);
+        given(productService.save(any(Product.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        //when
+        String jsonStringProduct = objectMapper.writeValueAsString(product1);
+
+        MockMultipartFile bytesArrayProduct = new MockMultipartFile("product", 
+                            null,
+                            "application/json",
+                            jsonStringProduct.getBytes());
+
+        ResultActions response = this.mockMvc.perform(multipart("/products/{id}", id)
+                        .with(request -> {
+                            request.setMethod("PUT");
+                            return request;
+                        })
+                        .file("image", null)
+                        .file(bytesArrayProduct));
+
+        //then
+        response.andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$['Producto guardado: '].name", is(product1.getName())))
+            .andExpect(jsonPath("$['Producto guardado: '].description", is(product1.getDescription())));
+        
+
+    }
+
+    @Test 
+    @DisplayName("Controller Test que elimina un producto")
+    void testDeleteProduct() throws Exception{
+
+        //given
+            int ProductId = 1;
+
+        given(productService.findById(ProductId)).willReturn(product0);
+        doNothing().when(productService).delete(product0);
+
+        //when
+        mockMvc.perform(delete("/products/{id}", ProductId))
+                .andExpect(status().isOk());
 
     }
 
