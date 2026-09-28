@@ -10,13 +10,18 @@ import com.example.entities.Presentation;
 import com.example.entities.Product;
 import com.example.services.PresentationService;
 import com.example.services.ProductService;
+import com.example.spring_security_jwt.model.ERole;
+import com.example.spring_security_jwt.model.Role;
+import com.example.spring_security_jwt.repository.RoleRepository;
+import com.example.spring_security_jwt.repository.UserRepository;
 
 @Configuration
 public class CreatesSamplesData {
 
     @Bean
-    public CommandLineRunner sampleData(ProductService productService, 
-        PresentationService presentationService) {
+	CommandLineRunner sampleData(ProductService productService, 
+        PresentationService presentationService, UserRepository userRepository, 
+		RoleRepository roleRepository) {
 
         return args -> {
 
@@ -130,6 +135,17 @@ public class CreatesSamplesData {
 				.stock(100)
 				.price( new BigDecimal(40.00))
 				.presentation(presentationService.findById(1))
+				.build()
+			);
+
+			//Agregamos roles de ADMIN y USER
+			roleRepository.save(Role.builder()
+				.name(ERole.ROLE_USER)
+				.build()
+			);
+
+			roleRepository.save(Role.builder()
+				.name(ERole.ROLE_ADMIN)
 				.build()
 			);
 
