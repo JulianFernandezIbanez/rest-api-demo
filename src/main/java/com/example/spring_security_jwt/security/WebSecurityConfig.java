@@ -60,6 +60,9 @@ public class WebSecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    //El bean siguiente es el que hay que saber personalizar para adaptarlo a nuestro proyecto
+    //Todo lo demas es boilerplate (codigo repetitivo)
+
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
