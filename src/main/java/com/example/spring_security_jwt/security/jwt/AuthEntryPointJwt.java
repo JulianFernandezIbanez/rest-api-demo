@@ -1,4 +1,4 @@
-package com.example.spring_security_jwt.security.jtw;
+package com.example.spring_security_jwt.security.jwt;
 
 import java.io.IOException;
 
