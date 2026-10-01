@@ -34,6 +34,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -114,6 +115,7 @@ public class ProductController {
      */
 
 	@GetMapping
+	@PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
 	public ResponseEntity<Map<String, Object>> getProducts(
 		@RequestParam(name = "page", required = false) Integer page,
 		@RequestParam(name = "size", required = false) Integer size
@@ -155,6 +157,7 @@ public class ProductController {
 	 */
 
 	@GetMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
 	public ResponseEntity<Map<String, Object>> getProudctById(
 		@PathVariable(name = "id", required = true) int Product_id
 	){
@@ -199,6 +202,7 @@ public class ProductController {
 	//Y tambien especificar el tipo de archivo que va a usar el metodo
 	@PostMapping(consumes = "multipart/form-data")
 	@Transactional
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Map<String, Object>> saveProduct(
 		@Valid
 		@RequestPart Product product,
@@ -291,6 +295,7 @@ public class ProductController {
 	*/
 
 	@GetMapping("/fileDownload/{fileCode}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> downloadFile(@PathVariable String fileCode){
 
 		Resource resource = null;
@@ -334,6 +339,7 @@ public class ProductController {
 	//un producto con la imagen recibida
 	@PutMapping(value = "/{id}",consumes = "multipart/form-data")
 	@Transactional
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Map<String, Object>> updateProduct(
 		@Valid
 		@RequestPart Product product,
@@ -427,6 +433,7 @@ public class ProductController {
 	*/
 	@DeleteMapping("/{id}")
 	@Transactional
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Map<String, Object>> deleteProducto(@PathVariable Integer id) {
 
 		ResponseEntity<Map<String, Object>> responseEntity = null;
