@@ -7,17 +7,20 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -31,13 +34,14 @@ import static org.mockito.ArgumentMatchers.any;
 import com.example.entities.Presentation;
 import com.example.entities.Product;
 import com.example.services.ProductService;
+import com.example.spring_security_jwt.payload.request.LoginRequest;
 import com.example.utilities.FileDownloadUtil;
 import com.example.utilities.FileUploadUtil;
 import com.example.utilities.FileUtils;
 
 import tools.jackson.databind.ObjectMapper;
 
-@WebMvcTest(controllers = ProductController.class)
+@SpringBootTest
 @AutoConfigureTestDatabase(replace = Replace.NONE)
 @AutoConfigureMockMvc 
 public class ProductControllerTest {
@@ -66,8 +70,41 @@ public class ProductControllerTest {
     Product product0;
     Product product1;
 
+    	String token;
+
     @BeforeEach 
-    void setUp(){
+    void setUp() throws Exception{
+
+        /**
+		 * Necesitamos obtener un token valido para presentarlo en cada test
+		 */
+		
+		LoginRequest logginRequest = LoginRequest.builder()
+				.username("admin1")
+				.password("Temp2026$$##")
+				.build();
+		
+		/**
+		 * El objeto anterior, logginRequest, tiene que ser convertido a formato JSON
+		 * para lo cual se puede utilizar el componente ObjectMapper que convierte a un 
+		 * String en formato JSON
+		 */
+		
+		String jsonLogginRequest = objectMapper.writeValueAsString(logginRequest);
+		
+		ResultActions resultActions = this.mockMvc.perform(post("/api/auth/signin")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(jsonLogginRequest));
+		
+		// Extraer el token de la respuesta a la request (peticion) anterior
+		
+		MvcResult mvcResult = resultActions.andDo(print()).andReturn();
+		
+		String contentAsString = mvcResult.getResponse().getContentAsString();
+		
+		JSONObject jsonObject = new JSONObject(contentAsString);
+		
+		this.token = "Bearer " + jsonObject.getString("token");    
 
         presentationPerUnits = Presentation.builder()
                     .name("unit")
@@ -114,7 +151,8 @@ public class ProductControllerTest {
 
         //when -> Realizar peticion HTTP mediante el metodo get al end point de products
         ResultActions response = mockMvc.perform(get("/products")
-                .accept(MediaType.APPLICATION_JSON));
+                .accept(MediaType.APPLICATION_JSON)				
+                .header("Authorization", this.token));
 
 
         //then
@@ -141,7 +179,8 @@ public class ProductControllerTest {
 
         ResultActions response = this.mockMvc.perform(multipart("/products")
                         .file("image", null)
-                        .file(bytesArrayProduct));
+                        .file(bytesArrayProduct)                
+                        .header("Authorization", this.token));
 
         //then
         response.andDo(print())
@@ -163,7 +202,8 @@ public class ProductControllerTest {
         //when
 
             //Esta forma evita crear una variable response para realizar las acciones como andDo
-            mockMvc.perform(get("/products/{id}", ProductId))
+            mockMvc.perform(get("/products/{id}", ProductId)
+                    .header("Authorization", this.token))
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$['Producto encontrado: '].name", is(product0.getName())));
@@ -181,7 +221,8 @@ public class ProductControllerTest {
 
         //when
 
-            mockMvc.perform(get("/products/{id}", ProductId))
+            mockMvc.perform(get("/products/{id}", ProductId)
+                    .header("Authorization", this.token))
                     .andExpect(status().isNotFound());
 
     }
@@ -209,7 +250,8 @@ public class ProductControllerTest {
                             return request;
                         })
                         .file("image", null)
-                        .file(bytesArrayProduct));
+                        .file(bytesArrayProduct)                
+                        .header("Authorization", this.token));
 
         //then
         response.andDo(print())
@@ -231,7 +273,8 @@ public class ProductControllerTest {
         doNothing().when(productService).delete(product0);
 
         //when
-        mockMvc.perform(delete("/products/{id}", ProductId))
+        mockMvc.perform(delete("/products/{id}", ProductId)
+                .header("Authorization", this.token))
                 .andExpect(status().isOk());
 
     }
