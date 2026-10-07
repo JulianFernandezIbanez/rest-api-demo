@@ -30,6 +30,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -42,6 +44,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 /**
 * La anotacion @RestController es para que todos los metodos que van a ser
@@ -169,11 +173,19 @@ public class ProductController {
 			
 			Product product = productService.findById(Product_id);
 
+			//Agregacion de enlaces hipermedia a traves del producto
+
+			//Crear enlace "self" apuntando al propio metodo
+			Link selfLink = linkTo(methodOn(ProductController.class).getProudctById(Product_id)).withSelfRel();
+			Link allProductslink = linkTo(methodOn(ProductController.class).getProducts(3, 3)).withRel("all-products");
+
 			if (product != null) {
 				
 				String successMessage = "El producto con el id "+ Product_id + " ha sido encontrado";
 				responsAsMap.put("successMessage: ", successMessage);
 				responsAsMap.put("Producto encontrado: ", product);
+				responsAsMap.put("Enlace propio", selfLink);
+				responsAsMap.put("Enlace a todos los productos", allProductslink);
 				responseEntity = new ResponseEntity<Map<String,Object>>(responsAsMap, HttpStatus.OK);
 
 			} else {
