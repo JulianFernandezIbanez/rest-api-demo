@@ -3,6 +3,8 @@ package com.example.entities;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import org.springframework.hateoas.RepresentationModel;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
